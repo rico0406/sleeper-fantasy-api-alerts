@@ -3,19 +3,31 @@ from telegram_bot import send_alerts
 from league_tools import fetch_all_transactions
 
 def weekly_alerts(league, last_week: int):
+    """
+    Send weekly alerts: standings and results of matchups.
+    Returns a list of alerts for further processing.
+    """
     alerts_list = []
-    transactions = fetch_all_transactions(league, last_week)
-    for tx in transactions:
-        if tx["type"] in ["drop", "waiver"]:
-            for player in tx.get("players", []):
-                if player.get("ownership", 0) >= 70:
-                    alerts_list.append({
-                        "player_id": player["player_id"],
-                        "ownership": player["ownership"],
-                        "type": tx["type"],
-                        "week": tx.get("week")
-                    })
-    send_alerts(alerts_list)
+
+    # --- 1️⃣ Standings ---
+    standings = league.get_standings()  # lista de times com wins/losses
+    standings_message = "🏆 *Current Standings:*\n"
+    for i, team in enumerate(standings, start=1):
+        standings_message += f"{i}. {team['name']} ({team['wins']}-{team['losses']})\n"
+    alerts_list.append({"message": standings_message})
+
+    # --- 2️⃣ Matchups / Results ---
+    matchups = league.get_matchups(week=last_week)  # lista de jogos da semana
+    results_message = f"⚔️ *Week {last_week} Results:*\n"
+    for matchup in matchups:
+        home = matchup['home_team']
+        away = matchup['away_team']
+        results_message += f"{home['name']} {home['points']} - {away['points']} {away['name']}\n"
+    alerts_list.append({"message": results_message})
+
+    league.get_scoreboards()
+
+    # --- Return the alerts list (sending via Telegram can be done separately) ---
     return alerts_list
 
 

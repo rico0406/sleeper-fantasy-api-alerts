@@ -11,6 +11,7 @@ import json
 from sleeper_wrapper import League
 from typing import List, Dict
 import os
+import requests
 
 
 def get_max_weeks_by_month() -> int:
@@ -161,3 +162,15 @@ def save_league_data_to_json(
         json.dump(data, f, indent=4)
 
     print(f"\nLeague data saved to {filename}")
+
+
+def get_player_stats(player_id, date):
+    """
+    Fetch player stats from Sleeper for a given date (YYYY-MM-DD)
+    """
+    url = f"https://api.sleeper.app/v1/stats/nfl/regular/{date}"
+    response = requests.get(url)
+    if response.status_code != 200:
+        return {}
+    stats_data = response.json()  # dict {player_id: stats}
+    return stats_data.get(player_id, {})

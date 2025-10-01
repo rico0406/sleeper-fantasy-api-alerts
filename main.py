@@ -18,4 +18,5 @@ if ALERT_TYPE == "weekly":
 elif ALERT_TYPE == "daily":
     daily_alerts(league, last_week)
 elif ALERT_TYPE == "live":
-    live_game_alerts(league, USER_ID)
+    pass
+#     live_game_alerts(league, USER_ID)
