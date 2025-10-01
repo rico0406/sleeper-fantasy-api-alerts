@@ -1,0 +1,61 @@
+name: Action Handler
+
+on:
+  schedule:
+    # Weekly alerts: Tuesday 10:00 UTC
+    - cron: '0 10 * * 2'
+    # Daily alerts: every day 12:00 UTC
+    - cron: '0 12 * * *'
+    # Live-game alerts: every day 12:00 UTC
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+jobs:
+  weekly_alerts:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.event.schedule == '0 10 * * 2'
+    env:
+      ALERT_TYPE: weekly
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      SLEEPER_LEAGUE_ID: ${{ secrets.SLEEPER_LEAGUE_ID }}
+      SLEEPER_USER_ID: ${{ secrets.SLEEPER_USER_ID }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install --upgrade pip && pip install -r requirements.txt
+      - run: python main.py
+
+  daily_alerts:
+    runs-on: ubuntu-latest
+    env:
+      ALERT_TYPE: daily
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      SLEEPER_LEAGUE_ID: ${{ secrets.SLEEPER_LEAGUE_ID }}
+      SLEEPER_USER_ID: ${{ secrets.SLEEPER_USER_ID }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install --upgrade pip && pip install -r requirements.txt
+      - run: python main.py
+
+  live_game_alerts:
+    runs-on: ubuntu-latest
+    env:
+      ALERT_TYPE: live
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      SLEEPER_LEAGUE_ID: ${{ secrets.SLEEPER_LEAGUE_ID }}
+      SLEEPER_USER_ID: ${{ secrets.SLEEPER_USER_ID }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install --upgrade pip && pip install -r requirements.txt
+      - run: python main.py
