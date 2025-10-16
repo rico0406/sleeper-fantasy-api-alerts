@@ -60,28 +60,36 @@ sleeper-fantasy-api-alerts/
 ```bash
 git clone https://github.com/rico0406/sleeper-fantasy-api-alerts.git
 cd sleeper-fantasy-api-alerts
-
+```
 2. Create a virtual environment
 
+```bash
 python -m venv venv
 source venv/Scripts/activate   # Windows
 source venv/bin/activate       # macOS/Linux
+```
 
 3. Install dependencies
 
+```bash
 pip install -r requirements.txt
+```
 
 4. Configure your environment
 
 Copy .env.example to .env and fill in your credentials:
 
+```bash
 TELEGRAM_BOT_TOKEN=your_telegram_token
 SLEEPER_LEAGUE_ID=your_sleeper_league_id
 SLEEPER_USER_ID=your_user_id
+```
 
 💬 Run the Telegram Bot Locally
 
+```bash
 python telegram_interactive.py
+```
 
 You should see:
 
@@ -93,23 +101,18 @@ standings
 
 ☁️ Deploy on Render / Railway
 
-    Push this project to your GitHub.
+Push this project to your GitHub. Create a new Worker service 
+on Render or Railway
 
-    Create a new Worker service on Render
+Add environment variables:
 
-or Railway
+    TELEGRAM_BOT_TOKEN
 
-    .
+    SLEEPER_LEAGUE_ID
 
-    Add environment variables:
+    SLEEPER_USER_ID
 
-        TELEGRAM_BOT_TOKEN
-
-        SLEEPER_LEAGUE_ID
-
-        SLEEPER_USER_ID
-
-    Deploy! The bot will stay online 24/7.
+Deploy! The bot will stay online 24/7.
 
 The Procfile handles the process:
 
@@ -156,22 +159,3 @@ jobs:
 Ricardo Oliveira
 Python Developer / Master in Industrial Automation Engineering
 Building automation tools, data workflows, and intelligent backend systems.
-
-🌍 GitHub Profile
-🏆 License
-
-This project is released under the MIT License
-
-.
-
-
----
-
-### 💾 2. Faça o commit e o push do README
-
-No terminal:
-
-```bash
-git add README.md
-git commit -m "Add detailed README.md for project documentation"
-git push origin main
