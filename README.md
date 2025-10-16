@@ -35,7 +35,7 @@ It also runs on a **scheduled basis** via **GitHub Actions**, making it fully au
 ---
 
 ## 🧱 Project Structure
-
+```
 sleeper-fantasy-api-alerts/
 │
 ├── alerts.py # Core logic for daily/weekly/live alerts
@@ -49,7 +49,7 @@ sleeper-fantasy-api-alerts/
 ├── requirements.txt
 ├── .env.example # Environment variable template
 └── README.md
-
+```
 
 ---
 
