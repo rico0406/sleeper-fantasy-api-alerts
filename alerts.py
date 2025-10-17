@@ -1,6 +1,7 @@
 from datetime import datetime
 from telegram_bot import send_alerts
-from league_tools import fetch_all_transactions
+from league_tools import fetch_all_transactions, display_standings
+
 
 def weekly_alerts(league, last_week: int):
     """
@@ -10,9 +11,11 @@ def weekly_alerts(league, last_week: int):
     alerts_list = []
 
     # --- 1️⃣ Standings ---
-    standings = league.get_standings()  # lista de times com wins/losses
+    standings = display_standings(league)  # lista de times com wins/losses
     standings_message = "🏆 *Current Standings:*\n"
+
     for i, team in enumerate(standings, start=1):
+        print(team)
         standings_message += f"{i}. {team['name']} ({team['wins']}-{team['losses']})\n"
     alerts_list.append({"message": standings_message})
 

@@ -104,9 +104,18 @@ def display_matchups(league: League, week: int):
         week (int): Week number.
     """
     matchups = league.get_matchups(week)
-    print(f"\n=== Matchups — Week {week} ===")
-    for m in matchups:
-        print(m)
+
+    # Converting to dict
+    matchups_dict = [
+        {
+            "name": team[0],
+            "wins": int(team[1]),
+            "losses": int(team[2]),
+            "PF": int(team[3])
+        } for team in matchups
+    ]
+
+    return matchups_dict
 
 
 def display_standings(league: League):
@@ -119,10 +128,18 @@ def display_standings(league: League):
     rosters = league.get_rosters()
     users = league.get_users()
     standings = league.get_standings(rosters, users)
-    print("\n=== Current Standings ===")
-    for s in standings:
-        print(s)
 
+    # Converting to dict
+    standings_dict = [
+            {
+                "name": team[0],
+                "wins": int(team[1]),
+                "losses": int(team[2]),
+                "PF": int(team[3])
+            } for team in standings
+        ]
+
+    return standings_dict
 
 def save_league_data_to_json(
     league_info: Dict,
