@@ -42,5 +42,6 @@ def send_alerts(alerts: list):
         print("No alerts to send.")
         return
     for alert in alerts:
-        message = format_alert_message(alert)
+        # message = format_alert_message(alert)
+        message = alert["message"]
         send_message(message)
