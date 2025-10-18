@@ -1,21 +1,27 @@
 import logging
 import os
 from pathlib import Path
+from logging.handlers import TimedRotatingFileHandler
 from typing import Dict
 
 # Directory for all log files
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 
-
-# Keep a registry of created loggers to avoid duplicates
+# Registry to avoid duplicated loggers
 _loggers: Dict[str, logging.Logger] = {}
+
+# Keep 3 weekly backups
+LOG_BACKUP_COUNT = 3
+
+# Rotate logs weekly at Wednesday (W2)
+LOG_ROTATION_TIME = "W2"
 
 
 def get_logger(alert_type: str) -> logging.Logger:
     """
-    Return a logger configured for a specific alert type.
-    Creates a new logger if it doesn't exist yet.
+    Return a logger configured for a specific alert type with weekly rotation.
+    Logs are rotated once per week and old files are automatically cleaned.
 
     Args:
         alert_type (str): Type of alert (e.g., 'weekly', 'daily', 'live').
@@ -30,31 +36,36 @@ def get_logger(alert_type: str) -> logging.Logger:
     logger = logging.getLogger(f"{alert_type}_logger")
     logger.setLevel(logging.INFO)
 
-    # File handler
+    # --- File handler with weekly rotation ---
     log_file = LOG_DIR / f"{alert_type}.log"
-    file_handler = logging.FileHandler(log_file, encoding="utf-8")
-    file_handler.setLevel(logging.INFO)
+    rotating_handler = TimedRotatingFileHandler(
+        filename=log_file,
+        when=LOG_ROTATION_TIME,
+        backupCount=LOG_BACKUP_COUNT,
+        encoding="utf-8",
+        utc=True
+    )
 
-    # Stream handler (to also show in GitHub Actions logs)
+    # --- Console handler (for GitHub Actions output) ---
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
 
-    # Formatter
+    # --- Formatter ---
     formatter = logging.Formatter(
         "%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
     )
-    file_handler.setFormatter(formatter)
+    rotating_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
 
-    # Attach handlers
-    logger.addHandler(file_handler)
+    # --- Attach handlers ---
+    logger.addHandler(rotating_handler)
     logger.addHandler(console_handler)
 
     # Avoid duplicate messages if logger already exists
     logger.propagate = False
 
-    # Register
+    # Store reference to avoid duplicates
     _loggers[alert_type] = logger
 
     return logger
