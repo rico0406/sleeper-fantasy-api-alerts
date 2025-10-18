@@ -1,36 +1,93 @@
 from datetime import datetime
+from typing import List, Dict
+
 from telegram_bot import send_alerts
-from league_tools import fetch_all_transactions, display_standings
+from league_tools import fetch_all_transactions, display_standings, League, get_scoreboards_json
 
 
-def weekly_alerts(league, last_week: int):
+def standings_alert(league: League) -> str:
     """
-    Send weekly alerts: standings and results of matchups.
-    Returns a list of alerts for further processing.
-    """
-    alerts_list = []
+    Generate a formatted message with the current league standings.
 
-    # --- 1️⃣ Standings ---
-    standings = display_standings(league)  # lista de times com wins/losses
+    Args:
+        league (sleeper_wrapper.League): The Sleeper League instance.
+
+    Returns:
+        str: A formatted message showing the current standings with wins and losses.
+
+    Notes:
+        - Uses `display_standings` to retrieve team names, wins, and losses.
+        - Teams are listed in ranking order starting from 1.
+    """
+    standings = display_standings(league)  # standings with wins and losses columns
     standings_message = "🏆 *Current Standings:*\n"
 
     for i, team in enumerate(standings, start=1):
-        print(team)
         standings_message += f"{i}. {team['name']} ({team['wins']}-{team['losses']})\n"
+
+    return standings_message
+
+
+def matchups_alert(league: League, week: int) -> str:
+    """
+    Generate a formatted message with the matchup results for a given week.
+
+    Args:
+        league (League): The Sleeper League instance.
+        week (int): The week number to retrieve matchups for.
+
+    Returns:
+        str: A formatted message showing the results of each matchup for the given week.
+
+    Notes:
+        - Uses `get_scoreboards_json` to retrieve team names and scores.
+        - Each matchup is displayed as `Team A points - Team B points`.
+    """
+    rosters = league.get_rosters()
+    matchups = league.get_matchups(week)
+    users = league.get_users()
+    scoreboard = get_scoreboards_json(
+        league=league,
+        rosters=rosters,
+        matchups=matchups,
+        users=users
+    )
+
+    results_message = f"⚔️ *Week {week} Results:*\n"
+    for match in scoreboard:
+        results_message += (
+            f"{match['team_a_name']} {match['team_a_points']} "
+            f"- {match['team_b_points']} {match['team_b_name']}\n"
+        )
+
+    return results_message
+
+
+def weekly_alerts(league: League, last_week: int) -> List[Dict[str, str]]:
+    """
+    Generate weekly alert messages including standings and matchup results.
+
+    Args:
+        league (sleeper_wrapper.League): The Sleeper League instance.
+        last_week (int): The most recent completed week number.
+
+    Returns:
+        List[Dict[str, str]]: A list of alert objects containing the message strings.
+
+    Notes:
+        - This function does not send messages directly.
+        - It returns structured messages ready for sending via Telegram or other services.
+    """
+    alerts_list: List[Dict[str, str]] = []
+
+    # --- Standings Alert ---
+    standings_message = standings_alert(league)
     alerts_list.append({"message": standings_message})
 
-    # --- 2️⃣ Matchups / Results ---
-    matchups = league.get_matchups(week=last_week)  # lista de jogos da semana
-    results_message = f"⚔️ *Week {last_week} Results:*\n"
-    for matchup in matchups:
-        home = matchup['home_team']
-        away = matchup['away_team']
-        results_message += f"{home['name']} {home['points']} - {away['points']} {away['name']}\n"
-    alerts_list.append({"message": results_message})
+    # --- Matchups / Results Alert ---
+    matchups_message = matchups_alert(league, last_week)
+    alerts_list.append({"message": matchups_message})
 
-    league.get_scoreboards()
-
-    # --- Return the alerts list (sending via Telegram can be done separately) ---
     return alerts_list
 
 
