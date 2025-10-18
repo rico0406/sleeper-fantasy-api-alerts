@@ -16,6 +16,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 10 * * 2')
     env:
       ALERT_TYPE: weekly
+      LOG_DIR: logs/weekly
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       SLEEPER_LEAGUE_ID: ${{ secrets.SLEEPER_LEAGUE_ID }}
@@ -25,21 +26,35 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: pip install --upgrade pip && pip install -r requirements.txt
+
       - name: Run weekly alerts
         run: python main.py
+
+      - name: Check if logs exist
+        id: check_logs
+        run: |
+          if [ -d "${LOG_DIR}" ] && [ "$(ls -A ${LOG_DIR})" ]; then
+            echo "logs_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "logs_exist=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload logs as artifact
+        if: steps.check_logs.outputs.logs_exist == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: weekly-logs
-          path: logs/
+          path: ${{ env.LOG_DIR }}
           retention-days: 7
 
   daily_alerts:
     runs-on: ubuntu-latest
     env:
       ALERT_TYPE: daily
+      LOG_DIR: logs/daily
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       SLEEPER_LEAGUE_ID: ${{ secrets.SLEEPER_LEAGUE_ID }}
@@ -49,21 +64,35 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: pip install --upgrade pip && pip install -r requirements.txt
+
       - name: Run daily alerts
         run: python main.py
+
+      - name: Check if logs exist
+        id: check_logs
+        run: |
+          if [ -d "${LOG_DIR}" ] && [ "$(ls -A ${LOG_DIR})" ]; then
+            echo "logs_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "logs_exist=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload logs as artifact
+        if: steps.check_logs.outputs.logs_exist == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: daily-logs
-          path: logs/
+          path: ${{ env.LOG_DIR }}
           retention-days: 7
 
   live_game_alerts:
     runs-on: ubuntu-latest
     env:
       ALERT_TYPE: live
+      LOG_DIR: logs/live
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       SLEEPER_LEAGUE_ID: ${{ secrets.SLEEPER_LEAGUE_ID }}
@@ -73,13 +102,26 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: pip install --upgrade pip && pip install -r requirements.txt
+
       - name: Run live alerts
         run: python main.py
+
+      - name: Check if logs exist
+        id: check_logs
+        run: |
+          if [ -d "${LOG_DIR}" ] && [ "$(ls -A ${LOG_DIR})" ]; then
+            echo "logs_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "logs_exist=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload logs as artifact
+        if: steps.check_logs.outputs.logs_exist == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: live-logs
-          path: logs/
+          path: ${{ env.LOG_DIR }}
           retention-days: 7
