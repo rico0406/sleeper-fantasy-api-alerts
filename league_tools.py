@@ -9,7 +9,7 @@ standings, and alerts for high-owned dropped/waiver players.
 import datetime
 import json
 from sleeper_wrapper import League
-from typing import List, Dict
+from typing import List, Dict, Any
 import os
 import requests
 
@@ -140,6 +140,60 @@ def display_standings(league: League):
         ]
 
     return standings_dict
+
+
+def get_scoreboards_json(
+        league: League,
+        rosters: List[Dict],
+        matchups: List[Dict],
+        users: List[Dict]
+) -> List[Dict[str, Any]]:
+    """
+    Returns the scoreboard in a JSON-friendly format.
+
+    Args:
+        league (League): League variable from Sleeper API
+        rosters (List[Dict]): List of roster objects from Sleeper API.
+        matchups (List[Dict]): List of matchup objects from Sleeper API.
+        users (List[Dict]): List of user objects from Sleeper API.
+
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries, each representing a matchup with:
+            - matchup_id (int)
+            - team_a_name (str)
+            - team_a_points (float)
+            - team_b_name (str)
+            - team_b_points (float)
+
+    Notes:
+        - Uses get_scoreboards() internally to preserve original logic.
+        - If there is a matchup with only one team (e.g., bye week), team_b fields will be None.
+    """
+    raw_scoreboards = league.get_scoreboards(rosters, matchups, users)
+    if not raw_scoreboards:
+        return []
+
+    json_friendly_list = []
+    for matchup_id, teams in raw_scoreboards.items():
+        team_a_name = teams[0][0]
+        team_a_points = teams[0][1]
+        if len(teams) > 1:
+            team_b_name = teams[1][0]
+            team_b_points = teams[1][1]
+        else:
+            team_b_name = None
+            team_b_points = None
+
+        json_friendly_list.append({
+            "matchup_id": matchup_id,
+            "team_a_name": team_a_name,
+            "team_a_points": team_a_points,
+            "team_b_name": team_b_name,
+            "team_b_points": team_b_points
+        })
+
+    return json_friendly_list
+
 
 def save_league_data_to_json(
     league_info: Dict,
