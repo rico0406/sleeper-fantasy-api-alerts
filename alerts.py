@@ -1,13 +1,11 @@
 from datetime import datetime
 from typing import List, Dict
 
-import sleeper_wrapper
-
 from telegram_bot import send_alerts
-from league_tools import fetch_all_transactions, display_standings
+from league_tools import fetch_all_transactions, display_standings, League, get_scoreboards_json
 
 
-def standings_alert(league: sleeper_wrapper.League) -> str:
+def standings_alert(league: League) -> str:
     """
     Generate a formatted message with the current league standings.
 
@@ -30,12 +28,12 @@ def standings_alert(league: sleeper_wrapper.League) -> str:
     return standings_message
 
 
-def matchups_alert(league: sleeper_wrapper.League, week: int) -> str:
+def matchups_alert(league: League, week: int) -> str:
     """
     Generate a formatted message with the matchup results for a given week.
 
     Args:
-        league (sleeper_wrapper.League): The Sleeper League instance.
+        league (League): The Sleeper League instance.
         week (int): The week number to retrieve matchups for.
 
     Returns:
@@ -48,7 +46,8 @@ def matchups_alert(league: sleeper_wrapper.League, week: int) -> str:
     rosters = league.get_rosters()
     matchups = league.get_matchups(week)
     users = league.get_users()
-    scoreboard = league.get_scoreboards_json(
+    scoreboard = get_scoreboards_json(
+        league=league,
         rosters=rosters,
         matchups=matchups,
         users=users
@@ -64,7 +63,7 @@ def matchups_alert(league: sleeper_wrapper.League, week: int) -> str:
     return results_message
 
 
-def weekly_alerts(league: sleeper_wrapper.League, last_week: int) -> List[Dict[str, str]]:
+def weekly_alerts(league: League, last_week: int) -> List[Dict[str, str]]:
     """
     Generate weekly alert messages including standings and matchup results.
 
