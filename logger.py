@@ -37,7 +37,9 @@ def get_logger(alert_type: str) -> logging.Logger:
     logger.setLevel(logging.INFO)
 
     # --- File handler with weekly rotation ---
-    log_file = LOG_DIR / f"{alert_type}.log"
+    log_dir = os.path.join(LOG_DIR, alert_type)
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, f"{alert_type}.log")
     rotating_handler = TimedRotatingFileHandler(
         filename=log_file,
         when=LOG_ROTATION_TIME,
