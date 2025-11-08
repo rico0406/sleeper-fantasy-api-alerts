@@ -9,6 +9,7 @@ standings, and alerts for high-owned dropped/waiver players.
 import datetime
 import json
 from sleeper_wrapper import League
+from players_tools import get_player_name
 from typing import List, Dict, Any
 import os
 import requests
@@ -235,13 +236,43 @@ def save_league_data_to_json(
     print(f"\nLeague data saved to {filename}")
 
 
-def get_player_stats(player_id, date):
-    """
-    Fetch player stats from Sleeper for a given date (YYYY-MM-DD)
-    """
-    url = f"https://api.sleeper.app/v1/stats/nfl/regular/{date}"
-    response = requests.get(url)
-    if response.status_code != 200:
-        return {}
-    stats_data = response.json()  # dict {player_id: stats}
-    return stats_data.get(player_id, {})
+def get_starters_ids(user_id: str, rosters: List[dict]) -> List[str]:
+
+    for team_roster in rosters:
+        if team_roster['owner_id'] == user_id:
+            return team_roster['starters']
+
+    raise ValueError("user_id wasn't found in any rosters")
+
+
+def get_user_starters_points(user_id: str, rosters: List[dict], matchups: List[dict]) -> List[dict]:
+
+    roster_id = None
+    for team_roster in rosters:
+        if team_roster['owner_id'] == user_id:
+            roster_id = team_roster['roster_id']
+            break
+
+    if not roster_id:
+        ValueError("user_id wasn't found in any rosters")
+
+    players_points = None
+    for team in matchups:
+        if team["roster_id"] == roster_id:
+            starters_list = team['starters']
+            players_points = team['players_points']
+            for player in players_points:
+                if player not in starters_list:
+                    players_points.pop(player)
+                else:
+                    players_points[player] = {
+                        "name": get_player_name(player),
+                        "points": players_points[player]
+                    }
+
+            break
+
+    if players_points:
+        return players_points
+    else:
+        raise ValueError("players_points wasn't found in any matchups")
