@@ -6,8 +6,8 @@ from players_tools import get_player_name
 @pytest.fixture
 def mock_players_data():
     return {
-        "123": {"first_name": "Patrick", "last_name": "Mahomes"},
-        "456": {"first_name": "Josh", "last_name": "Allen"},
+        "123": {"first_name": "Patrick", "last_name": "Mahomes", "full_name": "Patrick Mahomes"},
+        "456": {"first_name": "Josh", "last_name": "Allen", "full_name": "Josh Allen"},
     }
 
 

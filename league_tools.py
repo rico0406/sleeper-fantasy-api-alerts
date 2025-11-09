@@ -9,10 +9,10 @@ standings, and alerts for high-owned dropped/waiver players.
 import datetime
 import json
 from sleeper_wrapper import League
-from players_tools import get_player_name
+from players_tools import get_player_info
 from typing import List, Dict, Any
 import os
-import requests
+from datetime import datetime
 
 
 def get_max_weeks_by_month() -> int:
@@ -236,43 +236,131 @@ def save_league_data_to_json(
     print(f"\nLeague data saved to {filename}")
 
 
-def get_starters_ids(user_id: str, rosters: List[dict]) -> List[str]:
+def get_user_roster(user_id: str, league: League) -> Dict:
+    """
+    Retrieve the roster dictionary for a specific user.
 
-    for team_roster in rosters:
-        if team_roster['owner_id'] == user_id:
-            return team_roster['starters']
+    Args:
+        user_id (str): The ID of the user.
+        league (League): League object with the league information
 
-    raise ValueError("user_id wasn't found in any rosters")
+    Returns:
+        Dict: The roster dictionary for the given user.
+
+    Raises:
+        ValueError: If the user_id is not found in any roster.
+    """
+    rosters: List[Dict] = league.get_rosters()
+    for roster in rosters:
+        if roster['owner_id'] == user_id:
+            return roster
+    raise ValueError(f"user_id '{user_id}' wasn't found in any rosters")
 
 
-def get_user_starters_points(user_id: str, rosters: List[dict], matchups: List[dict]) -> List[dict]:
+# def get_starters_ids(user_id: str, rosters: List[Dict]) -> List[str]:
+#     """
+#     Get the list of starter player IDs for a given user.
+#
+#     Args:
+#         user_id (str): The ID of the user.
+#         rosters (List[Dict]): List of rosters, each containing 'owner_id' and 'starters'.
+#
+#     Returns:
+#         List[str]: List of starter player IDs for the user.
+#     """
+#     roster = get_user_roster(user_id, rosters)
+#     return roster['starters']
 
-    roster_id = None
-    for team_roster in rosters:
-        if team_roster['owner_id'] == user_id:
-            roster_id = team_roster['roster_id']
-            break
 
-    if not roster_id:
-        ValueError("user_id wasn't found in any rosters")
+def get_user_starters_points(league: League, user_id: str, matchups: List[Dict]) -> Dict[str, Dict[str, object]]:
+    """
+    Get the points and names of starter players for a given user.
 
-    players_points = None
-    for team in matchups:
-        if team["roster_id"] == roster_id:
-            starters_list = team['starters']
-            players_points = team['players_points']
-            for player in players_points:
-                if player not in starters_list:
-                    players_points.pop(player)
-                else:
-                    players_points[player] = {
-                        "name": get_player_name(player),
-                        "points": players_points[player]
-                    }
+    Args:
+        league (League): League object with the league information
+        user_id (str): The ID of the user.
+        matchups (List[Dict]): List of matchups, each containing 'roster_id', 'starters', and 'players_points'.
 
-            break
+    Returns:
+        Dict[str, Dict[str, object]]: Dictionary where keys are player IDs and values are dictionaries with
+                                      'name' (player full name) and 'points'.
 
-    if players_points:
-        return players_points
+    Raises:
+        ValueError: If the user_id is not found in any roster or if players_points for the roster isn't found.
+    """
+    roster = get_user_roster(user_id, league)
+    roster_id = roster['roster_id']
+    starters_ids = roster['starters']
+
+    # Find the matchup for this roster
+    for matchup in matchups:
+        if matchup['roster_id'] == roster_id:
+            all_players_points = matchup['players_points']
+
+            # Keep only starter players and attach full name
+            players_points = {
+                player_id: {
+                    "name": get_player_info(player_id, "full_name"),
+                    "points": all_players_points[player_id]
+                }
+                for player_id in starters_ids if player_id in all_players_points
+            }
+
+            if players_points:
+                return players_points
+            else:
+                raise ValueError(f"No players_points found for roster_id '{roster_id}'")
+
+    raise ValueError(f"Roster_id '{roster_id}' not found in matchups")
+
+
+def get_weekly_drops(league: League, week: int) -> List[str]:
+    """
+       Retrieve all players who were dropped during a given week
+       and are still available (i.e., were not subsequently added again).
+
+       Args:
+           league (League): The fantasy league instance providing transaction data.
+           week (int): The week number to check transactions for.
+
+       Returns:
+           List[str]: A list of player IDs (or names) that were dropped
+                      and not re-added during the same week.
+    """
+    transactions: List[Dict[str, Any]] = league.get_transactions(week)
+
+    dropped_players: set = set()
+
+    for player_transaction in transactions:
+        dropped: Dict[str, int] = player_transaction.get("drops", None)
+        added: Dict[str, int] = player_transaction.get("adds", None)
+        if dropped:
+            dropped_players.update(dropped.keys())
+
+        if added:
+            for added_player in added:
+                dropped_players.discard(added_player)
+
+    return list(dropped_players)
+
+
+def get_season_year() -> int:
+    """
+    Determine the season year based on the current month.
+
+    If the current month is between March (3) and December (12), return the current year.
+    Otherwise (January or February), return the previous year.
+
+    Returns:
+        int: The season year as an integer.
+    """
+    current_date = datetime.now()  # Get the current date and time
+    current_year = current_date.year
+    current_month = current_date.month
+
+    # If the month is March (3) through December (12), fiscal year is the current year
+    if 3 <= current_month <= 12:
+        return current_year
+    # If the month is January or February, fiscal year is the previous year
     else:
-        raise ValueError("players_points wasn't found in any matchups")
+        return current_year - 1
