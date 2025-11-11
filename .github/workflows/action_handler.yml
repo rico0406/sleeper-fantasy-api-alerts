@@ -6,8 +6,8 @@ on:
     - cron: '0 10 * * 2'
     # Daily alerts: every day 12:00 UTC
     - cron: '0 12 * * *'
-    # Live-game alerts: every day 12:00 UTC
-    - cron: '0 12 * * *'
+    # Live-game alerts:
+    - cron: "*/1 * * * *"  # every minute
   workflow_dispatch:
 
 jobs:
@@ -88,40 +88,23 @@ jobs:
           path: ${{ env.LOG_DIR }}
           retention-days: 7
 
-  live_game_alerts:
+  live-alert:
     runs-on: ubuntu-latest
-    env:
-      ALERT_TYPE: live
-      LOG_DIR: logs/live
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      SLEEPER_LEAGUE_ID: ${{ secrets.SLEEPER_LEAGUE_ID }}
-      SLEEPER_USER_ID: ${{ secrets.SLEEPER_USER_ID }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install --upgrade pip && pip install -r requirements.txt
-
-      - name: Run live alerts
-        run: python main.py
-
-      - name: Check if logs exist
-        id: check_logs
-        run: |
-          if [ -d "${LOG_DIR}" ] && [ "$(ls -A ${LOG_DIR})" ]; then
-            echo "logs_exist=true" >> $GITHUB_OUTPUT
-          else
-            echo "logs_exist=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload logs as artifact
-        if: steps.check_logs.outputs.logs_exist == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: live-logs
-          path: ${{ env.LOG_DIR }}
-          retention-days: 7
+        - uses: actions/checkout@v4
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.11'
+        - name: Install dependencies
+          run: |
+            pip install -r requirements.txt
+        - name: Run live alert
+          env:
+            ALERT_TYPE: live
+            LEAGUE_ID: ${{ secrets.LEAGUE_ID }}
+            USER_ID: ${{ secrets.USER_ID }}
+            TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+            TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          run: |
+            python main.py

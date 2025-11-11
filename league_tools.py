@@ -272,6 +272,21 @@ def get_user_roster(user_id: str, league: League) -> Dict:
 #     return roster['starters']
 
 
+def get_user_matchup(league: League, user_id: str, matchups: List[Dict]) -> Dict[str, Any]:
+    """
+    Get the matchup information for a given user.
+
+    """
+
+    roster = get_user_roster(user_id, league)
+    roster_id = roster['roster_id']
+
+    # Find the matchup for this roster
+    for matchup in matchups:
+        if matchup['roster_id'] == roster_id:
+            return matchup
+
+
 def get_user_starters_points(league: League, user_id: str, matchups: List[Dict]) -> Dict[str, Dict[str, object]]:
     """
     Get the points and names of starter players for a given user.
@@ -288,30 +303,51 @@ def get_user_starters_points(league: League, user_id: str, matchups: List[Dict])
     Raises:
         ValueError: If the user_id is not found in any roster or if players_points for the roster isn't found.
     """
-    roster = get_user_roster(user_id, league)
-    roster_id = roster['roster_id']
-    starters_ids = roster['starters']
+    matchup = get_user_matchup(league=league, user_id=user_id, matchups=matchups)
+    starters_ids = matchup["starters"]
 
-    # Find the matchup for this roster
-    for matchup in matchups:
-        if matchup['roster_id'] == roster_id:
-            all_players_points = matchup['players_points']
+    all_players_points = matchup['players_points']
 
-            # Keep only starter players and attach full name
-            players_points = {
-                player_id: {
-                    "name": get_player_info(player_id, "full_name"),
-                    "points": all_players_points[player_id]
-                }
-                for player_id in starters_ids if player_id in all_players_points
-            }
+    # Keep only starter players and attach full name
+    players_points = {
+        player_id: {
+            "name": get_player_info(player_id, "full_name"),
+            "points": all_players_points[player_id]
+        }
+        for player_id in starters_ids if player_id in all_players_points
+    }
 
-            if players_points:
-                return players_points
-            else:
-                raise ValueError(f"No players_points found for roster_id '{roster_id}'")
+    if players_points:
+        return players_points
+    else:
+        raise ValueError(f"No players_points found for user_id '{user_id}'")
 
-    raise ValueError(f"Roster_id '{roster_id}' not found in matchups")
+
+def __get_current_user_points(league: League, user_id: str, week: int) -> Dict[str, Any]:
+    """
+    Retrieve the current total points and individual player scores for a user's starters.
+
+    Args:
+        league (League): Sleeper League instance.
+        user_id (str): User's Sleeper ID.
+        week (int): The week number to retrieve matchups for.
+
+    Returns:
+        Dict[str, Any]: {
+            "players": {player_id: {"name": str, "points": float}},
+            "total_points": float,
+            "timestamp": str
+        }
+    """
+    matchups = league.get_matchups(week)
+    current_data = get_user_starters_points(league, user_id, matchups)
+    total_points = sum(p["points"] for p in current_data.values())
+
+    return {
+        "players": current_data,
+        "total_points": total_points,
+        "timestamp": datetime.now().isoformat()
+    }
 
 
 def get_weekly_drops(league: League, week: int) -> List[str]:

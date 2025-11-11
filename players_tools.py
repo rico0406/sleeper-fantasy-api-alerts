@@ -62,9 +62,13 @@ def get_player_info(
         info_keys = list(info)
         single_return = False
 
+    #--- Add team name if it is a DST---
+    if player_data.get("position", "") == "DEF" and info=="full_name":
+        player_data[info] = f"{player_data['first_name']} {player_data['last_name']}"
     # --- Check for missing keys ---
     missing_keys = [key for key in info_keys if key not in player_data]
     if missing_keys:
+        print(player_data)
         raise KeyError(f"Invalid info key(s) for player {player_id}: {missing_keys}")
 
     # --- Gather requested info ---

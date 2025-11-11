@@ -1,6 +1,6 @@
 from config import load_environment_variables
 from league_tools import League, get_last_week_number, get_max_weeks_by_month
-from alerts import weekly_alerts, daily_alerts, live_game_alerts
+from alerts import weekly_alerts, daily_alerts, live_score_change_alert
 from telegram_bot import send_alerts
 from logger import get_logger
 
@@ -19,10 +19,7 @@ def build_alerts(alert_type: str, league: League, user_id: str, logger) -> list:
     elif alert_type == "daily":
         return daily_alerts(league, last_week)
     elif alert_type == "live":
-        # Future implementation for live game alerts
-        # return live_game_alerts(league, user_id)
-        logger.warning("Live game alerts not yet implemented.")
-        return []
+        return live_score_change_alert(league, user_id)
     else:
         raise ValueError(f"Unknown ALERT_TYPE: {alert_type}")
 
