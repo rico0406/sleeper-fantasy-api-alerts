@@ -90,6 +90,13 @@ jobs:
 
   live-alert:
     runs-on: ubuntu-latest
+    env:
+      ALERT_TYPE: live
+      LOG_DIR: logs/weekly
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      SLEEPER_LEAGUE_ID: ${{ secrets.SLEEPER_LEAGUE_ID }}
+      SLEEPER_USER_ID: ${{ secrets.SLEEPER_USER_ID }}
     steps:
         - uses: actions/checkout@v4
         - name: Set up Python
