@@ -10,15 +10,22 @@ It also runs on a **scheduled basis** via **GitHub Actions**, making it fully au
 ## 🚀 Features
 
 ✅ **Weekly Reports**  
-- Automatically fetches league standings and matchup results every Tuesday (12h UTC).
+- Automatically fetches league standings and matchup results every Tuesday (12h UTC).  
+- Uses `weekly_alerts()` to build structured Telegram messages.
 
 ✅ **Daily Alerts**  
-- Monitors player adds/drops across the league.  
-- Notifies when a highly owned player (>70%) is dropped or placed on waivers.
+- Detects players dropped or moved to waivers.  
+- Sends an alert when a **highly owned player (>70%)** is dropped.
 
-✅ **Game-Day Alerts** *(coming soon)*  
-- Detects key in-game events for players on your roster (e.g., touchdowns, fumbles, interceptions).
-
+✅ **Live Score Change Alerts** 🟢 *(new!)*  
+- Monitors your fantasy team’s **live points** during matchups.  
+- Sends a Telegram alert when your team scores **more than 5 new points**.  
+- Identifies which **starter players** contributed to the increase.  
+- Powered by:
+  - `get_user_matchup()` → identifies your team’s matchup  
+  - `get_user_starters_points()` → collects individual starter stats  
+  - `live_score_change_alert()` → triggers score-based alerts  
+  - 
 ✅ **Interactive Telegram Bot**  
 - Users can message the bot directly with commands like:
   - `standings` or `classificação` → get current standings.
@@ -28,9 +35,12 @@ It also runs on a **scheduled basis** via **GitHub Actions**, making it fully au
 - Separate logic for weekly, daily, and live alerts.  
 - Reusable and extendable code modules (`league_tools.py`, `alerts.py`, `telegram_bot.py`).
 
-✅ **Automated & Cloud-Ready**  
-- Runs autonomously every week through **GitHub Actions**.  
-- The interactive bot runs continuously on **Render**, **Railway**, or **Fly.io**.
+✅ **Fully Modular Design**  
+- Separated logic per function and concern:
+  - `league_tools.py` → data retrieval and transformations  
+  - `alerts.py` → alert creation and formatting  
+  - `telegram_bot.py` → message delivery  
+  - `main.py` → entry point for automated runs  
 
 ---
 
@@ -38,16 +48,17 @@ It also runs on a **scheduled basis** via **GitHub Actions**, making it fully au
 ```
 sleeper-fantasy-api-alerts/
 │
-├── alerts.py # Core logic for daily/weekly/live alerts
-├── league_tools.py # League and Sleeper API interaction
-├── telegram_bot.py # Telegram message sending utilities
-├── telegram_interactive.py # Interactive Telegram bot (user commands)
-├── main.py # Entry point for automated alerts (GitHub Actions)
+├── alerts.py # Daily, weekly, and live scoring alerts
+├── league_tools.py # League data utilities (matchups, standings, points)
+├── players_tools.py # Player data lookups and ownership ratios
+├── telegram_bot.py # Sends messages to Telegram
+├── telegram_interactive.py # Interactive bot for user commands
+├── main.py # GitHub Actions entry point
 │
-├── .github/workflows/action_handler.yml # GitHub Actions scheduler
+├── .github/workflows/action_handler.yml # Automated scheduling
 ├── Procfile # For Render/Railway deployment
 ├── requirements.txt
-├── .env.example # Environment variable template
+├── .env.example
 └── README.md
 ```
 
@@ -120,23 +131,26 @@ worker: python telegram_interactive.py
 
 🧠 Architecture Overview
 
-    Sleeper API Layer (league_tools.py) → fetches live league data.
-
-    Alert Engine (alerts.py) → processes and formats insights.
-
-    Delivery System (telegram_bot.py & GitHub Actions) → sends automated alerts.
-
-    Interactive Layer (telegram_interactive.py) → responds to user messages in real time.
+| Layer                                             | Description                                 |
+| ------------------------------------------------- | ------------------------------------------- |
+| **Sleeper API Layer** (`league_tools.py`)         | Retrieves league, roster, and matchup data  |
+| **Player Layer** (`players_tools.py`)             | Fetches player stats, names, and ownership  |
+| **Alert Engine** (`alerts.py`)                    | Builds weekly, daily, and live score alerts |
+| **Delivery System** (`telegram_bot.py`)           | Sends messages to Telegram                  |
+| **Automation** (`main.py` + GitHub Actions)       | Runs alerts on schedule                     |
+| **Interactive Layer** (`telegram_interactive.py`) | Responds to live user commands              |
 
 🧰 Technologies Used
-Category	Technology
-Backend	Python 3.11+
-API	Sleeper Fantasy API
-Messaging	Telegram Bot API
-Automation	GitHub Actions
-Deployment	Render / Railway
-Environment	python-dotenv
-HTTP	requests
+| Category    | Technology          |
+| ----------- | ------------------- |
+| Backend     | Python 3.11+        |
+| API         | Sleeper Fantasy API |
+| Messaging   | Telegram Bot API    |
+| Automation  | GitHub Actions      |
+| Deployment  | Render / Railway    |
+| Environment | python-dotenv       |
+| HTTP        | requests            |
+
 🤖 GitHub Actions Automation
 
 This project runs automatically every week via a scheduled GitHub Action.

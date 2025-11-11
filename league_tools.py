@@ -274,8 +274,21 @@ def get_user_roster(user_id: str, league: League) -> Dict:
 
 def get_user_matchup(league: League, user_id: str, matchups: List[Dict]) -> Dict[str, Any]:
     """
-    Get the matchup information for a given user.
+    Retrieve the matchup information for a specific user in a given week.
 
+    Args:
+        league (League): The Sleeper League instance containing rosters and matchup data.
+        user_id (str): The unique Sleeper user ID to identify which team to locate.
+        matchups (List[Dict[str, Any]]): A list of matchup dictionaries for the week,
+            each containing keys such as 'roster_id', 'players_points', and 'starters'.
+
+    Returns:
+        Dict[str, Any]: The matchup dictionary corresponding to the user's roster,
+        including roster ID, starters, and points.
+
+    Raises:
+        ValueError: If the user_id is not found in the league rosters or
+        if the corresponding matchup for that roster cannot be located.
     """
 
     roster = get_user_roster(user_id, league)
@@ -285,6 +298,8 @@ def get_user_matchup(league: League, user_id: str, matchups: List[Dict]) -> Dict
     for matchup in matchups:
         if matchup['roster_id'] == roster_id:
             return matchup
+
+    raise ValueError(f"No matchup found for user_id '{user_id}' with roster_id '{roster_id}'.")
 
 
 def get_user_starters_points(league: League, user_id: str, matchups: List[Dict]) -> Dict[str, Dict[str, object]]:
@@ -321,33 +336,6 @@ def get_user_starters_points(league: League, user_id: str, matchups: List[Dict])
         return players_points
     else:
         raise ValueError(f"No players_points found for user_id '{user_id}'")
-
-
-def __get_current_user_points(league: League, user_id: str, week: int) -> Dict[str, Any]:
-    """
-    Retrieve the current total points and individual player scores for a user's starters.
-
-    Args:
-        league (League): Sleeper League instance.
-        user_id (str): User's Sleeper ID.
-        week (int): The week number to retrieve matchups for.
-
-    Returns:
-        Dict[str, Any]: {
-            "players": {player_id: {"name": str, "points": float}},
-            "total_points": float,
-            "timestamp": str
-        }
-    """
-    matchups = league.get_matchups(week)
-    current_data = get_user_starters_points(league, user_id, matchups)
-    total_points = sum(p["points"] for p in current_data.values())
-
-    return {
-        "players": current_data,
-        "total_points": total_points,
-        "timestamp": datetime.now().isoformat()
-    }
 
 
 def get_weekly_drops(league: League, week: int) -> List[str]:

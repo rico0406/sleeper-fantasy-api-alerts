@@ -278,31 +278,3 @@ def format_score_alert_message(diff_info: Dict[str, any]) -> str:
         f"Players contributing: {', '.join(players)}"
     )
 
-# OLD
-def __live_score_change_alert(league, user_id: str) -> List[Dict[str, str]]:
-    if not within_valid_hours():
-        return []
-
-    alerts: List[Dict[str, str]] = []
-    state = load_state()
-    prev_state = state.get(user_id)
-    ############ INVES DE USAR LEAGUE, MELHOR PASSAR OS MATCHUPS, TEM OUTRAS FUNÇÕES QUE USAM TB
-    current_state = get_current_user_points(league, user_id)
-
-    # Initialize state on first run
-    if not prev_state:
-        state[user_id] = current_state
-        save_state(state)
-        return []
-
-    diff_info = compare_score_changes(prev_state, current_state)
-
-    if diff_info["total_diff"] > 5:
-        message = format_score_alert_message(diff_info)
-        if message:
-            alerts.append({"message": message})
-            send_alerts(alerts)
-
-    state[user_id] = current_state
-    save_state(state)
-    return alerts
